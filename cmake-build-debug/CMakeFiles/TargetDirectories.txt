@@ -1,3 +1,0 @@
-/home/timotej/CLionProjects/PG2/cmake-build-debug/CMakeFiles/PG2.dir
-/home/timotej/CLionProjects/PG2/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/timotej/CLionProjects/PG2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
