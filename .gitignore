@@ -1,32 +1,5 @@
 # Ignore the CMake build directory
-cmake-build-*/
+cmake-build-debug/
 
 # Ignore CLion-specific files
 .idea/
-*.iml
-
-# Ignore compiled files and binaries
-*.o
-*.a
-*.so
-*.dll
-*.exe
-
-# Ignore CMake cache and generated files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
-
-# Ignore other build artifacts
-build/
-bin/
-lib/
-
-# Ignore temporary files
-*~
-*.swp
-*.swo
-
-# Ignore system-specific files
-.DS_Store
