@@ -17,6 +17,7 @@ public:
 
     bool init();  // Initialize GLFW, GLEW, and OpenGL context
     int run();    // Main application loop
+    static void printGLInfo(GLenum, const std::string&); // Print specific GL info
 
 private:
     GLFWwindow* window;  // GLFW window handle
