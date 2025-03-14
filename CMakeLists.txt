@@ -13,7 +13,7 @@ find_package(glm REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
 # Add your executable and source files
-add_executable(PG2 main.cpp app.cpp)
+add_executable(PG2 main.cpp app.cpp gl_err_callback.cpp)
 
 # Link libraries in the correct order
 target_link_libraries(PG2
