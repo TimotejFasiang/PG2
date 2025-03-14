@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "gl_err_callback.h" // My file
 
 App::App() : window(nullptr) {
     std::cout << "Constructed...\n";
@@ -12,6 +13,37 @@ App::~App() {
     glfwTerminate();
     std::cout << "Bye...\n";
     exit(EXIT_SUCCESS);
+}
+
+void App::errorCallback(int error, const char* description) {
+    std::cerr << "Error: " << description << std::endl;
+}
+
+void App::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    // Update the viewport to match the new window dimensions
+    glViewport(0, 0, width, height);
+    std::cout << "Window resized to: " << width << "x" << height << '\n';
+}
+
+void App::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        std::cout << "Mouse button pressed: " << button << '\n';
+    } else if (action == GLFW_RELEASE) {
+        std::cout << "Mouse button released: " << button << '\n';
+    }
+}
+
+void App::cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+    // Print the cursor position (optional)
+    // std::cout << "Cursor position: (" << xpos << ", " << ypos << ")\n";
+}
+
+void App::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (yoffset > 0.0) {
+        std::cout << "Wheel up...\n";
+    } else if (yoffset < 0.0) {
+        std::cout << "Wheel down...\n";
+    }
 }
 
 void App::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -76,6 +108,7 @@ void App::printGLInfo(GLenum parameter, const std::string& parameterName) {
         // Track if any flags are set
         bool anyFlagsSet = false;
 
+
         if (contextFlags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT) {
             std::cout << "  - Forward Compatible\n";
             anyFlagsSet = true;
@@ -109,6 +142,37 @@ void App::printGLInfo(GLenum parameter, const std::string& parameterName) {
 
 bool App::init() {
     try {
+
+        // Load and parse the JSON config file
+        std::ifstream configFile("app_settings.json");
+        if (!configFile.is_open()) {
+            throw std::runtime_error("Failed to open app_settings.json");
+        }
+
+        nlohmann::json config;
+        configFile >> config;
+
+        // Extract app name (optional)
+        std::string appName = config.value("appname", "OpenGL Context"); // Default window title
+
+        // Extract default resolution from the JSON file
+        if (!config.contains("default_resolution") ||
+            !config["default_resolution"].contains("x") ||
+            !config["default_resolution"].contains("y")) {
+            throw std::runtime_error("Invalid or missing default_resolution in app_settings.json");
+            }
+
+        int windowWidth = config["default_resolution"]["x"];
+        int windowHeight = config["default_resolution"]["y"];
+
+        // Validate window size
+        if (windowWidth <= 0 || windowHeight <= 0) {
+            throw std::runtime_error("Invalid window size in app_settings.json");
+        }
+
+        // Set GLFW error callback
+        glfwSetErrorCallback(App::errorCallback);
+
         // Initialize GLFW
         if (!glfwInit()) {
             throw std::runtime_error("Failed to initialize GLFW");
@@ -120,7 +184,7 @@ bool App::init() {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         // Create a GLFW window
-        window = glfwCreateWindow(800, 600, "OpenGL Context", nullptr, nullptr);
+        window = glfwCreateWindow(windowWidth, windowHeight, appName.c_str(), nullptr, nullptr);
         if (!window) {
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
@@ -144,6 +208,20 @@ bool App::init() {
 
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
+
+        if (GLEW_ARB_debug_output) {
+		    glDebugMessageCallback(MessageCallback, 0);
+		    glEnable(GL_DEBUG_OUTPUT);
+
+            //default is asynchronous debug output, use this to simulate glGetError() functionality
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+            std::cout << "GL_DEBUG enabled." << std::endl;
+	    } else {
+		    std::cout << "GL_DEBUG NOT SUPPORTED!" << std::endl;
+        }
+
+        // glEnable(GL_INVALID_ENUM); // This will generate a debug message
 
         std::cout << "Initialized...\n";
 
