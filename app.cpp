@@ -14,6 +14,32 @@ App::~App() {
     exit(EXIT_SUCCESS);
 }
 
+void App::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        // Retrieve the App instance from the window user pointer
+        App* app = static_cast<App*>(glfwGetWindowUserPointer(window));
+        if (!app) {
+            std::cerr << "Error: Unable to retrieve App instance from window user pointer\n";
+            return;
+        }
+
+        switch (key) {
+            case GLFW_KEY_ESCAPE:
+                std::cout << "ESC has been pressed!\n";
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+            case GLFW_KEY_F12:
+                // Toggle VSync
+                    app->vsyncOn = !app->vsyncOn; // Toggle VSync state
+            glfwSwapInterval(app->vsyncOn ? 1 : 0); // Update VSync setting
+            std::cout << "VSync is now " << (app->vsyncOn ? "ON" : "OFF") << '\n';
+            break;
+            default:
+                break;
+        }
+    }
+}
+
 void App::printGLInfo(GLenum parameter, const std::string& parameterName) {
     if (parameter == GL_VERSION) {
         // Handle numeric version separately
@@ -46,17 +72,30 @@ void App::printGLInfo(GLenum parameter, const std::string& parameterName) {
         glGetIntegerv(GL_CONTEXT_FLAGS, &contextFlags);
 
         std::cout << parameterName << ":\n";
+
+        // Track if any flags are set
+        bool anyFlagsSet = false;
+
         if (contextFlags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT) {
             std::cout << "  - Forward Compatible\n";
+            anyFlagsSet = true;
         }
         if (contextFlags & GL_CONTEXT_FLAG_DEBUG_BIT) {
             std::cout << "  - Debug\n";
+            anyFlagsSet = true;
         }
         if (contextFlags & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) {
             std::cout << "  - Robust Access\n";
+            anyFlagsSet = true;
         }
         if (contextFlags & GL_CONTEXT_FLAG_NO_ERROR_BIT) {
             std::cout << "  - No Error\n";
+            anyFlagsSet = true;
+        }
+
+        // If no flags are set, print "(none)"
+        if (!anyFlagsSet) {
+            std::cout << "  (none)\n";
         }
     } else {
         // Handle other string parameters
@@ -90,6 +129,14 @@ bool App::init() {
         // Make the window's context current
         glfwMakeContextCurrent(window);
 
+        // Initialize VSync state
+        vsyncOn = true; // VSync is enabled by default
+        glfwSwapInterval(vsyncOn ? 1 : 0); // Set initial VSync state
+
+        // Set key callback and pass 'this' pointer
+        glfwSetWindowUserPointer(window, this);
+        glfwSetKeyCallback(window, App::keyCallback);
+
         // Initialize GLEW
         if (glewInit() != GLEW_OK) {
             throw std::runtime_error("Failed to initialize GLEW");
@@ -120,13 +167,13 @@ bool App::init() {
 
 int App::run() {
     try {
-        // Main application loop
-        while (!glfwWindowShouldClose(window))
-        {
-            if (true) {
-              glfwSetWindowShouldClose(window, GLFW_TRUE);
-            }
+        // Variables for FPS calculation
+        auto lastTime = std::chrono::steady_clock::now();
+        int frameCount = 0;
+        double fps = 0.0;
 
+        // Main application loop
+        while (!glfwWindowShouldClose(window)) {
             // Clear OpenGL canvas (color buffer and depth buffer)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -138,6 +185,23 @@ int App::run() {
 
             // Poll for and process events
             glfwPollEvents();
+
+            // Calculate FPS
+            auto currentTime = std::chrono::steady_clock::now();
+            std::chrono::duration<double> elapsed = currentTime - lastTime;
+            frameCount++;
+
+            // Update FPS every second
+            if (elapsed.count() >= 1.0) {
+                fps = frameCount / elapsed.count();
+                frameCount = 0;
+                lastTime = currentTime;
+
+                // Update window title with FPS and VSync state
+                std::string title = "OpenGL Context - FPS: " + std::to_string(static_cast<int>(fps)) +
+                                   " | VSync: " + (vsyncOn ? "ON" : "OFF");
+                glfwSetWindowTitle(window, title.c_str());
+            }
         }
 
         std::cout << "Finished OK...\n";
