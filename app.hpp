@@ -7,10 +7,11 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include <chrono>
 #include <stack>
 #include <random>
+#include <nlohmann/json.hpp>
+#include "assets.hpp"
 
 class App {
 public:
@@ -32,4 +33,18 @@ public:
 private:
     GLFWwindow* window;  // GLFW window handle
     bool vsyncOn; // Add VSync state
+
+    //new GL stuff
+    GLuint shader_prog_ID{ 0 };
+    GLuint VBO_ID{ 0 };
+    GLuint VAO_ID{ 0 };
+    
+    GLfloat r{ 1.0f }, g{ 0.0f }, b{ 0.0f }, a{ 1.0f };
+    
+    std::vector<vertex> triangle_vertices =
+    {
+    	{{0.0f,  0.5f,  0.0f}},
+    	{{0.5f, -0.5f,  0.0f}},
+    	{{-0.5f, -0.5f,  0.0f}}
+    };
 };

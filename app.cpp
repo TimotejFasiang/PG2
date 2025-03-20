@@ -1,5 +1,11 @@
 #include "app.hpp"
-#include "gl_err_callback.h" // My file
+#include "gl_err_callback.h"
+#include <iostream>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "assets.hpp"
 
 App::App() : window(nullptr) {
     std::cout << "Constructed...\n";
@@ -181,9 +187,6 @@ bool App::init() {
         // Set OpenGL version to 4.1 (or any version you prefer)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-        // Create a GLFW window
         window = glfwCreateWindow(windowWidth, windowHeight, appName.c_str(), nullptr, nullptr);
         if (!window) {
             glfwTerminate();
@@ -214,7 +217,7 @@ bool App::init() {
 		    glEnable(GL_DEBUG_OUTPUT);
 
             //default is asynchronous debug output, use this to simulate glGetError() functionality
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
             std::cout << "GL_DEBUG enabled." << std::endl;
 	    } else {
