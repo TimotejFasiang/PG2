@@ -18,6 +18,8 @@ public:
     App();
     ~App();
 
+    void init_assets(); //Shaders
+
     bool init();  // Initialize GLFW, GLEW, and OpenGL context
     int run();    // Main application loop
     static void printGLInfo(GLenum, const std::string&); // Print specific GL info
@@ -32,7 +34,7 @@ public:
 
 private:
     GLFWwindow* window;  // GLFW window handle
-    bool vsyncOn; // Add VSync state
+    bool vsyncOn{}; // Add VSync state
 
     //new GL stuff
     GLuint shader_prog_ID{ 0 };
