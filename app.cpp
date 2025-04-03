@@ -6,12 +6,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "assets.hpp"
+#include "ShaderProgram.hpp"
 
 App::App() : window(nullptr) {
     std::cout << "Constructed...\n";
 }
 
 App::~App() {
+
+    my_shader.clear();
+    // other_shader.clear();
 
     //cleanup GL data
     glDeleteProgram(shader_prog_ID);
@@ -31,7 +35,17 @@ void App::init_assets(void) {
     //
     // Initialize pipeline: compile, link and use shaders
     //
+    // shader: load, compile, link, initialize params
+    // (may be moved to global variables - if all models use same shader)
+    ShaderProgram my_shader = ShaderProgram("resources/basic.vert", "resources/basic.frag");
+    
+    // model: load model file, assign shader used to draw a model
+    Model my_model = Model("resources/objects/triangle.obj", my_shader);
 
+    // put model to scene
+    scene.push_back("my_first_object", my_model); 
+
+    
     //SHADERS - define & compile & link
     const char* vertex_shader =
         "#version 460 core\n"
@@ -61,8 +75,6 @@ void App::init_assets(void) {
     glAttachShader(shader_prog_ID, vs);
     glLinkProgram(shader_prog_ID);
 
-    //now we can delete shader parts (they can be reused, if you have more shaders)
-    //the final shader program already linked and stored separately
     glDetachShader(shader_prog_ID, fs);
     glDetachShader(shader_prog_ID, vs);
     glDeleteShader(vs);
@@ -255,6 +267,8 @@ bool App::init() {
         // Set OpenGL version to 4.6
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+
+        // Create GLFW Window
         window = glfwCreateWindow(windowWidth, windowHeight, appName.c_str(), nullptr, nullptr);
         if (!window) {
             glfwTerminate();
@@ -268,9 +282,13 @@ bool App::init() {
         vsyncOn = true; // VSync is enabled by default
         glfwSwapInterval(vsyncOn ? 1 : 0); // Set initial VSync state
 
-        // Set key callback and pass 'this' pointer
+        // Set callbacks and pass 'this' pointer
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, App::keyCallback);
+        glfwSetMouseButtonCallback(window, App::mouseButtonCallback);
+        glfwSetCursorPosCallback(window, App::cursorPositionCallback);
+        glfwSetScrollCallback(window, App::scrollCallback);
+        glfwSetFramebufferSizeCallback(window, App::framebufferSizeCallback);
 
         // Initialize GLEW
         if (glewInit() != GLEW_OK) {
@@ -280,16 +298,14 @@ bool App::init() {
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
 
-        if (GLEW_ARB_direct_state_access) {
-            init_assets();
-        } else {
-            throw std::runtime_error("Direct State Access (DSA) is not supported!");
-        }
+        init();
+
+        // First init OpenGL, THEN init assets: valid context must exist
+        init_assets();
 
         if (GLEW_ARB_debug_output) {
 		    glDebugMessageCallback(MessageCallback, 0);
 		    glEnable(GL_DEBUG_OUTPUT);
-
             std::cout << "GL_DEBUG enabled." << std::endl;
 	    } else {
 		    std::cout << "GL_DEBUG NOT SUPPORTED!" << std::endl;
@@ -321,68 +337,70 @@ int App::run() {
     try {
 
         GLfloat r,g,b,a;
-    r=g=b=a=1.0f;
+        r=g=b=a=1.0f;
 
-    // Activate shader program. There is only one program, so activation can be out of the loop.
-    // In more realistic scenarios, you will activate different shaders for different 3D objects.
-    glUseProgram(shader_prog_ID);
+        // Activate shader program. There is only one program, so activation can be out of the loop.
+        // In more realistic scenarios, you will activate different shaders for different 3D objects.
+        glUseProgram(shader_prog_ID);
 
-    // Get uniform location in GPU program. This will not change, so it can be moved out of the game loop.
-    GLint uniform_color_location = glGetUniformLocation(shader_prog_ID, "uniform_Color");
-    if (uniform_color_location == -1) {
-        std::cerr << "Uniform location is not found in active shader program. Did you forget to activate it?\n";
-    }
-
-        // Variables for FPS calculation
-        auto lastTime = std::chrono::steady_clock::now();
-        int frameCount = 0;
-        double fps = 0.0;
-
-        // Main application loop
-        while (!glfwWindowShouldClose(window)) {
-            // Clear OpenGL canvas (color buffer and depth buffer)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            // Render or update your scene here
-            // ...
-
-            //set uniform parameter for shader
-            // (try to change the color in key callback)
-            glUniform4f(uniform_color_location, r, g, b, a);
-
-            //bind 3d object data
-            glBindVertexArray(VAO_ID);
-
-            // draw all VAO data
-            glDrawArrays(GL_TRIANGLES, 0, triangle_vertices.size());
-
-            // Swap front and back buffers
-            glfwSwapBuffers(window);
-
-            // Poll for and process events
-            glfwPollEvents();
-
-            // Calculate FPS
-            auto currentTime = std::chrono::steady_clock::now();
-            std::chrono::duration<double> elapsed = currentTime - lastTime;
-            frameCount++;
-
-            // Update FPS every second
-            if (elapsed.count() >= 1.0) {
-                fps = frameCount / elapsed.count();
-                frameCount = 0;
-                lastTime = currentTime;
-
-                // Update window title with FPS and VSync state
-                std::string title = "OpenGL Context - FPS: " + std::to_string(static_cast<int>(fps)) +
-                                   " | VSync: " + (vsyncOn ? "ON" : "OFF");
-                glfwSetWindowTitle(window, title.c_str());
-            }
+        // Get uniform location in GPU program. This will not change, so it can be moved out of the game loop.
+        GLint uniform_color_location = glGetUniformLocation(shader_prog_ID, "uniform_Color");
+        if (uniform_color_location == -1) {
+            std::cerr << "Uniform location is not found in active shader program. Did you forget to activate it?\n";
         }
 
-        std::cout << "Finished OK...\n";
-        return EXIT_SUCCESS;
-    }
+            // Variables for FPS calculation
+            auto lastTime = std::chrono::steady_clock::now();
+            int frameCount = 0;
+            double fps = 0.0;
+
+            // Main application loop
+            while (!glfwWindowShouldClose(window)) {
+                // Clear OpenGL canvas (color buffer and depth buffer)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                // Render or update your scene here
+                // ...
+
+
+                // set shader uniforms once (if all models use same shader)
+                my_shader.activate();
+                // my_shader.setUniform("my_color", my_rgba);
+                my_shader.setUniform(uniform_color_location, r, g, b, a);
+
+                // draw all models in the scene
+                for (auto const& model : scene) {
+                    if (model.name == "redbox") // per model setting
+                        model.shader.setUniform("color", red);
+                    model.draw();
+                }
+
+                // Swap front and back buffers
+                glfwSwapBuffers(window);
+                // Poll for and process events
+                glfwPollEvents();
+
+                // Calculate FPS
+                auto currentTime = std::chrono::steady_clock::now();
+                std::chrono::duration<double> elapsed = currentTime - lastTime;
+                frameCount++;
+
+                // Update FPS every second
+                if (elapsed.count() >= 1.0) {
+                    fps = frameCount / elapsed.count();
+                    frameCount = 0;
+                    lastTime = currentTime;
+
+                    // Update window title with FPS and VSync state
+                    std::string title = "OpenGL Context - FPS: " + std::to_string(static_cast<int>(fps)) +
+                                       " | VSync: " + (vsyncOn ? "ON" : "OFF");
+                    glfwSetWindowTitle(window, title.c_str());
+                }
+            }
+
+            std::cout << "Finished OK...\n";
+            return EXIT_SUCCESS;
+        }
     catch (std::exception const& e) {
         std::cerr << "App failed: " << e.what() << std::endl;
         return EXIT_FAILURE;

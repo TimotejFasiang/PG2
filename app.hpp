@@ -12,6 +12,7 @@
 #include <random>
 #include <nlohmann/json.hpp>
 #include "assets.hpp"
+#include "ShaderProgram.hpp"
 
 class App {
 public:
