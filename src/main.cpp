@@ -2,16 +2,13 @@
 
 int main(int argc, char** argv) {
     App app;
-
     try {
         if (app.init()) {
             return app.run();
         }
-    }
-    catch (std::exception const& e) {
+    } catch (const std::exception& e) {
         std::cerr << "App failed: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }

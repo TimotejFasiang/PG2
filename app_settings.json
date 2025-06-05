@@ -1,7 +1,11 @@
 {
-  "appname": "first_test",
+  "appname": "OpenGL Application",
   "default_resolution": {
-    "x": 800,
-    "y": 640
+    "x": 1440,
+    "y": 810
+  },
+  "antialiasing": {
+    "enabled": false,
+    "samples": 4
   }
 }

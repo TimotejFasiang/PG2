@@ -40,10 +40,12 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 		}
 	}();
 
-	std::cout << "[GL CALLBACK]: " <<
-		"source = " << src_str <<
-		", type = " << type_str <<
-		", severity = " << severity_str <<
-		", ID = '" << id << '\'' <<
-		", message = '" << message << '\'' << std::endl;
+	if (id != 131185 and id != 131218) {
+		std::cout << "[GL CALLBACK]: " <<
+			"source = " << src_str <<
+			", type = " << type_str <<
+			", severity = " << severity_str <<
+			", ID = '" << id << '\'' <<
+			", message = '" << message << '\'' << std::endl;
+	}
 }

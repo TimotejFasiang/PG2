@@ -1,16 +1,21 @@
 #version 460 core
 
-// input vertex attributes
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
 
-in vec3 aPos;   // position: MUST exist
-in vec3 aColor; // any additional attributes are optional, any data type, etc.
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoord;
 
-out vec3 color; // optional output attribute
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-void main()
-{
-    // Outputs the positions/coordinates of all vertices, MUST WRITE
-    gl_Position = vec4(aPos, 1.0f);
-    
-    color = aColor; // copy color to output
+void main() {
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal; // Proper normal transformation
+    TexCoord = aTexCoord;
+
+    gl_Position = projection * view * vec4(FragPos, 1.0);
 }

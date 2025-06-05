@@ -12,24 +12,39 @@ find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-# Add your executable and source files
-add_executable(PG2 main.cpp app.cpp gl_err_callback.cpp ShaderProgram.cpp)
+# Add ImGui as subproject
+add_subdirectory(external/imgui)
 
-# Link libraries in the correct order
-target_link_libraries(PG2
-        ${OpenCV_LIBRARIES}
-        ${GLEW_LIBRARIES}
-        glfw  # Link GLFW (modern CMake target)
-        OpenGL::GL  # Link OpenGL explicitly
-        nlohmann_json::nlohmann_json
+# Add executable
+add_executable(PG2
+        src/main.cpp
+        src/app.cpp
+        src/Camera.cpp
+        src/ShaderProgram.cpp
+        src/Model.cpp
+        src/Mesh.cpp
+        src/Texture.cpp
+        src/Cube.cpp
+        src/OBJloader.cpp
+        src/gl_err_callback.cpp
+        src/AnimatedTexture.cpp
 )
 
-# Include directories using target-based approach
+# Link libraries
+target_link_libraries(PG2 PRIVATE
+        ${OpenCV_LIBS}
+        GLEW::GLEW
+        glfw
+        OpenGL::GL
+        glm::glm
+        nlohmann_json::nlohmann_json
+        imgui
+        imgui_impl_glfw
+        imgui_impl_opengl3
+)
+
+# Include directories
 target_include_directories(PG2 PRIVATE
+        src
         ${OpenCV_INCLUDE_DIRS}
-        ${GLEW_INCLUDE_DIRS}
-        ${GLFW_INCLUDE_DIRS}
-        ${OpenGL_INCLUDE_DIRS}
-        ${GLM_INCLUDE_DIRS}
-        ${nlohmann_json_INCLUDE_DIRS}
 )
